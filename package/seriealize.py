@@ -59,7 +59,7 @@ def bin_seriealize(list_response) :
                 elif (without_space == "D10+") :
                     dic_int_list.append(-11)
                 else :
-                    print("error : ", without_space)
+                    print("error : ", sub_chain)
 
             if (len(dic_int_list) > 7) :
                 dic_int_list = dic_int_list[:7]

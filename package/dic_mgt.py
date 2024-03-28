@@ -20,6 +20,24 @@ def MAE_MSE_calculator(pred_dict, df_raw, index) :
 
     return full_Mae_dict, full_Mse_dict
 
+def MAE_MSE_median_calculator(pred_dict, df_raw, index) :
+    col_index = df_raw.columns.get_loc('close')
+
+    medians = [sorted(sublist)[len(sublist)//2] if len(sublist) % 2 != 0 else
+        (sorted(sublist)[len(sublist)//2 - 1] + sorted(sublist)[len(sublist)//2]) / 2
+        for sublist in zip(*pred_dict)]  
+        
+    Mae_dict = []
+    Mse_dict = []
+
+    for i,elt in enumerate(medians) :
+        row_index = i + index
+        Mae_dict.append(np.abs(elt - df_raw.iloc[row_index, col_index]))
+        Mse_dict.append(np.square(elt - df_raw.iloc[row_index, col_index]))
+
+    return [Mae_dict], [Mse_dict]
+
+
 def dic_mgt(dic_error, dic_error_3, dic_error_5, dic_error_7) :
     for elt in dic_error_3["input_length"].items() :
         list = dic_error["input_length"][elt[0]]["Mae"]
@@ -62,3 +80,12 @@ def table_display (dic_error_number) :
     # Affichage du tableau
     print(tabulate(table, headers=headers))
 
+
+def get_basic_dic() :
+    dic = {"input_length" : {6: {"Mae": None, "Mse": None},
+                                12: {"Mae": None, "Mse": None},
+                                24: {"Mae": None, "Mse": None},
+                                48: {"Mae": None, "Mse": None},
+                                96: {"Mae": None, "Mse": None},
+                                192: {"Mae": None, "Mse": None}}}
+    return dic

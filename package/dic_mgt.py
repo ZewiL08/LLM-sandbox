@@ -1,5 +1,8 @@
 import numpy as np
 from tabulate import tabulate
+import pickle
+
+dic_mode = ["naive", "return", "bin"]
 
 def MAE_MSE_calculator(pred_dict, df_raw, index) :
     full_Mae_dict = []
@@ -89,3 +92,61 @@ def get_basic_dic() :
                                 96: {"Mae": None, "Mse": None},
                                 192: {"Mae": None, "Mse": None}}}
     return dic
+
+
+def make_dic_MAE_MSE(mode) :
+    if mode == "naive" :
+        str_first = 'pickle/dic_error_naive.pkl'
+        str_second = 'pickle/dic_error_naive_median.pkl'
+    elif mode == "return" :
+        str_first = 'pickle/dic_error_return.pkl'
+        str_second = 'pickle/dic_error_return_median.pkl'
+    elif mode == "bin" :
+        str_first = 'pickle/dic_error_bin.pkl'
+        str_second = 'pickle/dic_error_bin_median.pkl'
+    else :
+        print("The mode does not exist. Existing mode are : ")
+        for elt in dic_mode :
+            print(elt)
+
+    with open(str_first, 'rb') as fichier:
+        dict_error = pickle.load(fichier)
+
+    with open(str_second, 'rb') as fichier:
+        dict_error_median = pickle.load(fichier)
+
+    dic_error_3 = get_basic_dic()
+    dic_error_5 = get_basic_dic()
+    dic_error_7 = get_basic_dic()
+
+    dic_error_3_median = get_basic_dic()
+    dic_error_5_median = get_basic_dic()
+    dic_error_7_median = get_basic_dic()
+
+    print("dic_error :")
+    print(dict_error)
+    dic_mgt(dict_error, dic_error_3, dic_error_5, dic_error_7)
+    dic_mgt(dict_error_median, dic_error_3_median, dic_error_5_median, dic_error_7_median)
+    print(dic_error_3)
+
+    return (dic_error_3, dic_error_5, dic_error_7, dic_error_3_median, dic_error_5_median, dic_error_7_median)
+
+
+def display_tab(all_dic) :
+    dic_error_3, dic_error_5, dic_error_7, dic_error_3_median, dic_error_5_median, dic_error_7_median = all_dic
+    print("Global MAE/MSE")
+    print("Mean error with 3 days forecasting")
+    table_display(dic_error_3)
+    print("Mean error with 5 days forecasting")
+    table_display(dic_error_5)
+    print("Mean error with 7 days forecasting")
+    table_display(dic_error_7)
+
+    print("##############################")
+    print("Median MAE/MSE")
+    print("Median error with 3 days forecasting")
+    table_display(dic_error_3_median)
+    print("Median error with 5 days forecasting")
+    table_display(dic_error_5_median)
+    print("Median error with 7 days forecasting")
+    table_display(dic_error_7_median)

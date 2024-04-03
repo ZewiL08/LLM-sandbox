@@ -93,6 +93,13 @@ def get_basic_dic() :
                                 192: {"Mae": None, "Mse": None}}}
     return dic
 
+def get_specific_dic(list_of_length) :
+
+    dic = {"input_length" : {}}
+    
+    for elt in list_of_length :
+        dic["input_length"][elt] = {"Mae": None, "Mse": None}
+    return dic
 
 def make_dic_MAE_MSE(mode) :
     if mode == "naive" :

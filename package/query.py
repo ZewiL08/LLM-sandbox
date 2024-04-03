@@ -6,7 +6,7 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 def request_gpt(input_str) :
 
     chatgpt_sys_message = "You are a helpful assistant that performs time series predictions. The user will provide a sequence and you will predict the remaining sequence. The sequence is represented by decimal strings separated by commas."
-    extra_input = "Please continue the following sequence without producing any additional text. Do not say anything like 'the next terms in the sequence are', just return the 7 following numbers. Sequence:\n"
+    extra_input = "Please continue the following sequence without producing any additional text. Do not say anything like 'the next terms in the sequence are', just return the 7 following numbers and explain how you came out with the result. Sequence:\n"
 
 
 

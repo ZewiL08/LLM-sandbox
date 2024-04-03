@@ -141,7 +141,7 @@ def make_prediction_bin(data , setup = None, model = "gpt-4-vision-preview") :
         input_str = str_convert(train.values)
 
         print("Input str : ", input_str)
-        list_response = request_gpt(input_str)
+        list_response = request_gpt_bin(input_str)
         print("GPT Answer : ", list_response)
 
         final_dic_int_list = bin_seriealize(list_response)

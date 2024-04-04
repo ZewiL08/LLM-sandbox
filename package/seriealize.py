@@ -7,7 +7,7 @@ def str_convert(data) :
         final_str = final_str + str_number + ", "
     return final_str
 
-def basic_seriealize(list_response) :
+def basic_seriealize(data, list_response) :
     dic_int_list = []
     for elt in list_response :
         try :
@@ -25,8 +25,15 @@ def basic_seriealize(list_response) :
             continue
     return dic_int_list
 
+def return_seriealize(data, list_response) :
+    dic_int_list = basic_seriealize(data, list_response)
+    print("int list return")
+    print(dic_int_list)
+    
+    final_dic_int_list = convert_return_to_close(dic_int_list, data.df_raw, data.current_input_length)
+    return final_dic_int_list
 
-def bin_seriealize(list_response) :
+def bin_seriealize(data, list_response) :
     final_dic_int_list = []
     for elt in list_response :
         try :
@@ -72,7 +79,12 @@ def bin_seriealize(list_response) :
             print("error in seriealization : ")
             continue
     
+
+    print("serialized bin : ", final_dic_int_list)
+    final_dic_int_list = convert_bin_to_close(final_dic_int_list, data.df_raw, data.current_input_length)
+
     return final_dic_int_list
+
 
 def convert_bin_to_close(final_dic_int_list, df_raw, input_length) :
     final_dic = []

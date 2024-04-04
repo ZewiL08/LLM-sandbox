@@ -13,160 +13,67 @@ from package.dic_mgt import *
 dic_dataSet = ["bitcoin", "bitcoin_return", "AirPassenger", "Istanbul"]
 dic_mode = ["naive", "return", "bin"]
 
-def make_prediction(mode, data , setup = None, model = "gpt-4-vision-preview") :
-    if mode == "naive" :
-        make_prediction_naive(data , setup , model)
-    elif mode == "return" :
-        make_prediction_return(data , setup , model)
-    elif mode == "bin" :
-        make_prediction_bin(data , setup , model)
-    else :
-        print("The mode does not exist. Existing mode are : ")
-        for elt in dic_mode :
-            print(elt)
 
-def get_setup_dates(setup) :
-    if setup == None :
-            ending_predict_date = '2023-11-01'
-            ending_dates = ['2023-11-04', '2023-11-06', '2023-11-08']   
-            list_input_length = [6, 12, 24, 48, 96, 192]
-    else :
-        ending_predict_date = setup["ending_predict_date"]
-        ending_dates = setup["ending_dates"]
-        list_input_length = setup["list_input_length"]
 
-    return (ending_predict_date, ending_dates, list_input_length)
+def convert_date_good(input_length, end_date, predict_last_date) :
+    ending_predict_date_num = datetime.strptime(end_date, '%Y-%m-%d')
+    new_date = ending_predict_date_num - timedelta(days=input_length)
+    start_date = new_date.strftime('%Y-%m-%d')
 
-def make_prediction_naive(data , setup = None, model = "gpt-4-vision-preview") :
+    new_end_date = ending_predict_date_num + timedelta(days=predict_last_date)
+    ending_date = new_end_date.strftime('%Y-%m-%d')
+    return start_date, ending_date
+
+
+def make_prediction(data , model = "gpt-4-vision-preview") :
     
-    ending_predict_date, ending_dates, list_input_length = get_setup_dates(setup)
-    savefig = "naive/" + data + "/"
-    index_save = 0
+    end_date = data.end_date
+    list_input_length = data.input_length
+    savefig = data.mode + "/" + data.name + "/"
 
     dic_error = get_specific_dic(list_input_length)
     dic_error_median = get_specific_dic(list_input_length)
 
     for input_length in list_input_length :
+        data.current_input_length = input_length
 
-        start_date, end_date = convert_date_good(input_length, ending_predict_date, ending_dates)
+        predict_last_date = data.predict_interval[-1]
+        start_date, ending_date = convert_date_good(input_length, end_date, predict_last_date)
+        data.get_data(input_length, start_date, ending_date)
+        df_raw = data.df_raw
+        train = data.train
 
-        df_raw, train, test = get_the_data(data, input_length, start_date, end_date)
         input_str = str_convert(train.values)
         print("Input str : ", input_str)
 
-        list_response = request_gpt(input_str)
-        print("GPT Answer : ", list_response)
+        try :
+            list_response = request_gpt(input_str)
+            print("GPT Answer : ", list_response)
+        except Exception as e:
+            print("An error occurred:", e)
+            continue  
 
-        final_dic_int_list = basic_seriealize(list_response)
+        final_dic_int_list = data.seriealize(list_response)
         print("serialized list : ", final_dic_int_list)
 
         compute_error(final_dic_int_list, df_raw, input_length,  dic_error, dic_error_median)
         
-        index_save += 1
+        index_save = input_length
         current_folder = savefig + str(index_save)
-        plot_preds_candles(df_raw, train, final_dic_int_list, "gpt-4-vision-preview", savefig = current_folder)
+        data.draw_function(df_raw, train, final_dic_int_list, "gpt-4-vision-preview", savefig = current_folder)
 
-    with open('pickle/dic_error_naive.pkl', 'wb') as fichier:
+    dic_name = "pickle/dic_error_" + data.mode + "_" + data.name + ".pkl"
+    dic_name_median =  "pickle/dic_error_" + data.mode + "_" + data.name + "_median" + ".pkl"
+    with open(dic_name, 'wb') as fichier:
         pickle.dump(dic_error, fichier)
 
-    with open('pickle/dic_error_naive_median.pkl', 'wb') as fichier:
+    with open(dic_name_median, 'wb') as fichier:
         pickle.dump(dic_error_median, fichier)
 
-
-def make_prediction_return(data , setup = None, model = "gpt-4-vision-preview") :
-    
-    ending_predict_date, ending_dates, list_input_length = get_setup_dates(setup)
-    savefig = "return/" + data + "/"
-    data = data + "_return"
-    index_save = 0
-    
-    dic_error = get_specific_dic(list_input_length)
-    dic_error_median = get_specific_dic(list_input_length)
-
-    for input_length in list_input_length :
-
-        start_date, end_date = convert_date_good(input_length, ending_predict_date, ending_dates)
-
-        df_raw, train, test = get_the_data( data, input_length, start_date, end_date)
-        input_str = str_convert(train.values)
-
-        print("Input str : ", input_str)
-        list_response = request_gpt(input_str)
-        print("GPT Answer : ", list_response)
-
-        dic_int_list = basic_seriealize(list_response)
-        print("int list return")
-        print(dic_int_list)
-        
-        final_dic_int_list = convert_return_to_close(dic_int_list, df_raw, input_length)
-        print("int list, close")
-        print(final_dic_int_list)
-
-        compute_error(final_dic_int_list, df_raw, input_length, dic_error, dic_error_median)
-
-        index_save += 1
-        current_folder = savefig + str(index_save)
-        plot_preds_candles(df_raw, train, final_dic_int_list, "gpt-4-vision-preview",  savefig = current_folder)
-
-
-    with open('pickle/dic_error_return.pkl', 'wb') as fichier:
-        pickle.dump(dic_error, fichier)
-
-    with open('pickle/dic_error_return_median.pkl', 'wb') as fichier:
-        pickle.dump(dic_error_median, fichier)
-
-
-def make_prediction_bin(data , setup = None, model = "gpt-4-vision-preview") :
-    
-    ending_predict_date, ending_dates, list_input_length = get_setup_dates(setup)
-
-    savefig = "bin/" + data + "/"
-    index_save = 0
-
-    dic_error = get_specific_dic(list_input_length)
-    dic_error_median = get_specific_dic(list_input_length)
-
-    for input_length in list_input_length :
-
-        start_date, end_date = convert_date_good(input_length, ending_predict_date, ending_dates)
-
-        df_raw, train, test = get_the_data( data, input_length, start_date, end_date)
-        
-        input_str = str_convert(train.values)
-        print("Input str : ", input_str)
-
-        list_response = request_gpt_bin(input_str)
-        print("GPT Answer : ", list_response)
-
-        final_dic_int_list = bin_seriealize(list_response)
-        print("serialized : ", final_dic_int_list)
-
-        final_dic_int_list = convert_bin_to_close(final_dic_int_list, df_raw, input_length)
-        print("int list, close")
-        print(final_dic_int_list)
-
-        compute_error(final_dic_int_list, df_raw, input_length, dic_error, dic_error_median)
-
-        index_save += 1
-        current_folder = savefig + str(index_save)
-        plot_preds_candles(df_raw, train, final_dic_int_list, "gpt-4-vision-preview", savefig= current_folder )
-
-
-    with open('pickle/dic_error_bin.pkl', 'wb') as fichier:
-        pickle.dump(dic_error, fichier)
-
-    with open('pickle/dic_error_bin_median.pkl', 'wb') as fichier:
-        pickle.dump(dic_error_median, fichier)
-
-
-def convert_date_good(input_length, ending_predict_date, ending_dates) :
-    ending_predict_date_num = datetime.strptime(ending_predict_date, '%Y-%m-%d')
-    new_date = ending_predict_date_num - timedelta(days=input_length)
-
-    start_date = new_date.strftime('%Y-%m-%d')
-    end_date = ending_dates[-1]
-
-    return (start_date, end_date)
+    print("Two pickle files have been created one with MSE/MAE among all samples and the second with MSE/MAE among median only")
+    print(f"The path for the pickle file are the following : ")
+    print(dic_name)
+    print(dic_name_median)
 
 
 def compute_error(final_dic_int_list, df_raw, input_length, dic_error, dic_error_median) :
@@ -184,14 +91,14 @@ def compute_error(final_dic_int_list, df_raw, input_length, dic_error, dic_error
 
 
 
-def get_the_data(name, input_length, start_date = None, end_date = None) :
-    if name == "bitcoin" :
+def get_the_data(data, input_length, start_date = None, end_date = None) :
+    if data.name == "bitcoin" :
         return get_data_set("datasets/BTC_Daily_ohlc.csv", input_length, start_date, end_date)
-    elif name == "bitcoin_return" :
+    elif data.name == "bitcoin_return" :
         return get_data_set_return("datasets/BTC_Daily_ohlc.csv", input_length, start_date, end_date)
-    elif name == "AirPassenger" :
+    elif data.name == "AirPassenger" :
         return get_data_darts(input_length)
-    elif name == "Istanbul" :
+    elif data.name == "Istanbul" :
         return get_data_set_simple(input_length)
     else :
         print("Your request data set is : ", name)
@@ -219,7 +126,7 @@ def get_data_set(name, input_length, start_date, end_date) :
         train = series.iloc[:splitpoint]
         test = series.iloc[splitpoint:]
 
-    return (df_raw, train, test)
+    return (df_raw, train)
 
 def get_data_set_return(name, input_length, start_date, end_date) :
     with open(name) as f:
@@ -244,7 +151,7 @@ def get_data_set_return(name, input_length, start_date, end_date) :
         df_raw['open'] = df_raw['open'].astype(float)
         df_raw['return'] = ((df_raw['close'] / df_raw['open']) - 1) * 10000
         
-    return (df_raw, train, test)
+    return (df_raw, train)
 
 
 def get_data_set_simple(input_length) :
@@ -262,7 +169,7 @@ def get_data_set_simple(input_length) :
     train = series.iloc[:input_length]
     test = series.iloc[input_length:]  
 
-    return (df_raw, train, test)
+    return (df_raw, train)
 
 
 def get_data_darts(input_length) :
@@ -280,5 +187,5 @@ def get_data_darts(input_length) :
     train = series.iloc[:input_length]
     test = series.iloc[input_length:]  
 
-    return (df, train, test)
+    return (df, train)
 

@@ -9,6 +9,7 @@ def MAE_MSE_calculator(pred_dict, df_raw, index) :
     full_Mse_dict = []
     col_index = df_raw.columns.get_loc('close')
 
+
     for list_elt in pred_dict :
         Mae_dict = []
         Mse_dict = []
@@ -101,25 +102,12 @@ def get_specific_dic(list_of_length) :
         dic["input_length"][elt] = {"Mae": None, "Mse": None}
     return dic
 
-def make_dic_MAE_MSE(mode) :
-    if mode == "naive" :
-        str_first = 'pickle/dic_error_naive.pkl'
-        str_second = 'pickle/dic_error_naive_median.pkl'
-    elif mode == "return" :
-        str_first = 'pickle/dic_error_return.pkl'
-        str_second = 'pickle/dic_error_return_median.pkl'
-    elif mode == "bin" :
-        str_first = 'pickle/dic_error_bin.pkl'
-        str_second = 'pickle/dic_error_bin_median.pkl'
-    else :
-        print("The mode does not exist. Existing mode are : ")
-        for elt in dic_mode :
-            print(elt)
-
-    with open(str_first, 'rb') as fichier:
+def make_dic_MAE_MSE(path1, path2) :
+    
+    with open(path1, 'rb') as fichier:
         dict_error = pickle.load(fichier)
 
-    with open(str_second, 'rb') as fichier:
+    with open(path2, 'rb') as fichier:
         dict_error_median = pickle.load(fichier)
 
     dic_error_3 = get_basic_dic()

@@ -9,7 +9,9 @@ def MAE_MSE_calculator(pred_dict, df_raw, index) :
     full_Mse_dict = []
     col_index = df_raw.columns.get_loc('close')
 
-
+    print("pred_dict", pred_dict)
+    print("df_raw", df_raw)
+    
     for list_elt in pred_dict :
         Mae_dict = []
         Mse_dict = []

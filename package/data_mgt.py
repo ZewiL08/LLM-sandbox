@@ -2,6 +2,7 @@ import pandas as pd
 import darts.datasets
 
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import pickle
 import copy
 
@@ -17,13 +18,40 @@ dic_mode = ["naive", "return", "bin"]
 
 def convert_date_good(input_length, end_date, predict_last_date) :
     ending_predict_date_num = datetime.strptime(end_date, '%Y-%m-%d')
-    new_date = ending_predict_date_num - timedelta(days=input_length)
+    new_date = ending_predict_date_num - timedelta(days=input_length) - timedelta(days=predict_last_date)
     start_date = new_date.strftime('%Y-%m-%d')
+    return start_date
 
-    new_end_date = ending_predict_date_num + timedelta(days=predict_last_date)
-    ending_date = new_end_date.strftime('%Y-%m-%d')
-    return start_date, ending_date
 
+def convert_date_good_month(input_length, end_date, predict_last_date) :
+    
+    ending_predict_date_num = datetime.strptime(end_date, '%Y-%m-%d')
+    new_date = ending_predict_date_num - relativedelta(days=input_length) - relativedelta(days=predict_last_date)
+    start_date = new_date.strftime('%Y-%m-%d')
+    print("end date :", end_date)
+    print("start date :", start_date)
+    return start_date
+
+
+
+def check_all_correct(data, start_date, day = True) :
+
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date_obj = datetime.strptime(data.end_date, '%Y-%m-%d')
+    
+    if day :
+        diff = (end_date_obj - start_date_obj).days
+    else :
+        diff = (end_date_obj.year - start_date_obj.year) * 12 + (end_date_obj.month - start_date_obj.month)
+    
+    for i,input in enumerate(data.input_length) :
+        if diff < input + data.predict_interval[-1] :
+            print(f"Not enough data with the current preset. Starting date is set as {start_date}, ending date is set as {data.end_date}, input_length is set as {data.input_length} and the predict interval is set as {data.predict_interval}. So with these preset you need to have at least {diff} DataPoints available. The input_length has been troncatenated to {data.input_length[:i]}. Let's remember that for the current DataSet {data.name} the first dataPoint is {data.start_data} and the last DataPoint is {data.end_data}")
+            data.input_length = data.input_length[:i]
+            
+            return False
+    
+    return True
 
 def make_prediction(data , model = "gpt-4-vision-preview") :
     
@@ -37,9 +65,7 @@ def make_prediction(data , model = "gpt-4-vision-preview") :
     for input_length in list_input_length :
         data.current_input_length = input_length
 
-        predict_last_date = data.predict_interval[-1]
-        start_date, ending_date = convert_date_good(input_length, end_date, predict_last_date)
-        data.get_data(input_length, start_date, ending_date)
+        data.get_data(input_length, end_date)
         df_raw = data.df_raw
         train = data.train
 
@@ -172,20 +198,30 @@ def get_data_set_simple(input_length) :
     return (df_raw, train)
 
 
-def get_data_darts(input_length) :
-    dsname = "AirPassengersDataset"
+def get_data_darts(data, input_length, end_date) :
+
+    predict_last_date = data.predict_interval[-1]
+    start_date = data.convert_date(input_length, end_date, predict_last_date)
+
+    print("start_date :", start_date)
+    print("end_date : ", end_date)
+
+    dsname = data.name
     darts_ds = getattr(darts.datasets,dsname)().load()
     
     df = darts_ds.pd_dataframe()
-    df = df.head(input_length + 7)
     df = df.reset_index()
     df = df.rename(columns={"Month": "date", "#Passengers": "close"})
+
+    mask = (df["date"] >= start_date) & (df["date"] <= end_date)
+    df = df.loc[mask]
 
     df['close'] = df['close'].astype(float)
 
     series = pd.Series(df['close'].values, index=df['date'])
     train = series.iloc[:input_length]
-    test = series.iloc[input_length:]  
+    print("train :", train)
+    print("df :", df)
 
     return (df, train)
 

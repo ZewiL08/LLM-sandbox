@@ -73,6 +73,7 @@ class bitcoin_data(data):
 
 
     def get_data(self, input_length, start_date = None, end_date = None) :
+        print(f"Now getting the date with following preset : start date = {start_date}, end date = {end_date}")
         if end_date is None:
             end_date = self.end_date
         if start_date is None:

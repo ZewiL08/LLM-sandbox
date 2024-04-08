@@ -35,10 +35,9 @@ def plot_preds_candles(df, train, pred, model_name, savefig = ""):
     
 
     # plt.plot(range(index, index + len(pred[0])), pred[0], label=model_name, color='purple')
-    plt.grid()
     plt.legend(loc='upper left')
 
-    index_to_display = range(0, len(truth), len(truth) // 3)
+    index_to_display = range(0, len(truth), len(truth) // 6)
     truth.index = truth.index.date
     display_date = truth.index[index_to_display]
     plt.xticks(index_to_display, display_date)
@@ -71,7 +70,6 @@ def plot_pred_classic(df, train, pred, model_name, savefig = "") :
 
 
     # plt.plot(range(index, index + len(pred[0])), pred[0], label=model_name, color='purple')
-    plt.grid()
     plt.legend(loc='upper left')
 
     index_to_display = range(0, len(df["date"]), len(df["date"]) // 3)

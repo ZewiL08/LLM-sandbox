@@ -11,6 +11,18 @@ from package.plot import *
 from package.seriealize import *
 from package.dic_mgt import *
 
+
+class Scaler:
+    """
+    Represents a data scaler with transformation and inverse transformation functions.
+
+    Attributes:
+        transform (callable): Function to apply transformation.
+        inv_transform (callable): Function to apply inverse transformation.
+    """
+    transform: callable = lambda x: x
+    inv_transform: callable = lambda x: x  
+
 dic_dataSet = ["bitcoin", "bitcoin_return", "AirPassenger", "Istanbul"]
 dic_mode = ["naive", "return", "bin"]
 
@@ -20,6 +32,8 @@ def convert_date_good(input_length, end_date, predict_last_date) :
     ending_predict_date_num = datetime.strptime(end_date, '%Y-%m-%d')
     new_date = ending_predict_date_num - timedelta(days=input_length) - timedelta(days=predict_last_date)
     start_date = new_date.strftime('%Y-%m-%d')
+    print("end date :", end_date)
+    print("start date : ", start_date)
     return start_date
 
 
@@ -64,12 +78,63 @@ def make_prediction(data , model = "gpt-4-vision-preview") :
 
     for input_length in list_input_length :
         data.current_input_length = input_length
+        data.get_data(input_length, start_date = None, end_date = end_date)
+        print("data :", data)
+        df_raw = data.df_raw
+        train = data.train
+        print("train :", train)
+
+        input_str = str_convert(train.values)
+        print("Input str : ", input_str)
+
+        try :
+            list_response = request_gpt(input_str)
+            print("GPT Answer : ", list_response)
+        except Exception as e:
+            print("An error occurred:", e)
+            continue  
+
+        final_dic_int_list = data.seriealize(list_response)
+        print("serialized list : ", final_dic_int_list)
+
+        compute_error(final_dic_int_list, df_raw, input_length,  dic_error, dic_error_median)
+        
+        index_save = input_length
+        current_folder = savefig + str(index_save)
+        data.draw_function(df_raw, train, final_dic_int_list, "gpt-4-vision-preview", savefig = current_folder)
+
+    dic_name = "pickle/dic_error_" + data.mode + "_" + data.name + ".pkl"
+    dic_name_median =  "pickle/dic_error_" + data.mode + "_" + data.name + "_median" + ".pkl"
+    with open(dic_name, 'wb') as fichier:
+        pickle.dump(dic_error, fichier)
+
+    with open(dic_name_median, 'wb') as fichier:
+        pickle.dump(dic_error_median, fichier)
+
+    print("Two pickle files have been created one with MSE/MAE among all samples and the second with MSE/MAE among median only")
+    print(f"The path for the pickle file are the following : ")
+    print(dic_name)
+    print(dic_name_median)
+
+
+def make_prediction_scaler(data , model = "gpt-4-vision-preview") :
+    
+    end_date = data.end_date
+    list_input_length = data.input_length
+    savefig = data.mode + "/" + data.name + "/"
+
+    dic_error = get_specific_dic(list_input_length)
+    dic_error_median = get_specific_dic(list_input_length)
+
+    for input_length in list_input_length :
+        data.current_input_length = input_length
 
         data.get_data(input_length, end_date)
         df_raw = data.df_raw
         train = data.train
 
-        input_str = str_convert(train.values)
+        input_scale = scaler(train.values)
+        input_str = str_convert(input_scale)
         print("Input str : ", input_str)
 
         try :
@@ -132,8 +197,24 @@ def get_the_data(data, input_length, start_date = None, end_date = None) :
         for elt in dic_dataSet :
             print(elt)
 
+def scale(input) :
+    return 
 
+def get_scaler(input) :
 
+    alpha=0.3
+    basic=True
+    temp=1.0
+    top_p=0.8
+    
+
+    q = np.maximum(np.quantile(np.abs(input), alpha),.01)
+    def transform(x):
+        return x / q
+    def inv_transform(x):
+        return x * q
+    
+    return Scaler(transform=transform, inv_transform=inv_transform)
 
 
 def get_data_set(name, input_length, start_date, end_date) :

@@ -96,6 +96,15 @@ def get_basic_dic() :
                                 192: {"Mae": None, "Mse": None}}}
     return dic
 
+def get_basic_dic_list() :
+    dic = {"input_length" : {6: {"Mae": [], "Mse": []},
+                                12: {"Mae": [], "Mse": []},
+                                24: {"Mae": [], "Mse": []},
+                                48: {"Mae": [], "Mse": []},
+                                96: {"Mae": [], "Mse": []},
+                                192: {"Mae": [], "Mse": []}}}
+    return dic
+
 def get_specific_dic(list_of_length) :
 
     dic = {"input_length" : {}}

@@ -100,11 +100,11 @@ def make_prediction(data , model = "gpt-4-vision-preview") :
         compute_error(final_dic_int_list, df_raw, input_length,  dic_error, dic_error_median)
         
         index_save = input_length
-        current_folder = savefig + str(index_save)
+        current_folder = savefig + data.end_date + "_" + str(index_save)
         data.draw_function(df_raw, train, final_dic_int_list, "gpt-4-vision-preview", savefig = current_folder)
 
-    dic_name = "pickle/dic_error_" + data.mode + "_" + data.name + ".pkl"
-    dic_name_median =  "pickle/dic_error_" + data.mode + "_" + data.name + "_median" + ".pkl"
+    dic_name = "pickle/dic_error_" + data.mode + "_" + data.name + "_" + data.end_date + ".pkl"
+    dic_name_median =  "pickle/dic_error_" + data.mode + "_" + data.name + "_" + data.end_date  + "_median" + ".pkl"
     with open(dic_name, 'wb') as fichier:
         pickle.dump(dic_error, fichier)
 

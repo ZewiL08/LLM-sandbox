@@ -69,7 +69,7 @@ class bitcoin_data(data):
         if predict_interval is None :
             self.predict_interval = [3, 5, 7]
 
-        check_all_correct(self, self.start_data, True)
+        # check_all_correct(self, self.start_data, True)
 
 
     def get_data(self, input_length, start_date = None, end_date = None) :
@@ -79,8 +79,8 @@ class bitcoin_data(data):
         if start_date is None:
             start_date = convert_date_good(input_length, end_date, self.predict_interval[-1])
 
-        if not check_all_correct(self, start_date, True) :
-            start_date = convert_date_good(input_length, end_date, self.predict_interval[-1])
+        # if not check_all_correct(self, start_date, True) :
+        #     start_date = convert_date_good(input_length, end_date, self.predict_interval[-1])
 
 
         if self.mode == "naive" or self.mode == "bin" :

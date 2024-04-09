@@ -83,7 +83,7 @@ class bitcoin_data(data):
         #     start_date = convert_date_good(input_length, end_date, self.predict_interval[-1])
 
 
-        if self.mode == "naive" or self.mode == "bin" :
+        if self.mode == "naive" or self.mode == "bin" or self.mode == "base" :
             df_raw, train = get_data_set("datasets/BTC_Daily_ohlc.csv", input_length, start_date, end_date)
         elif self.mode == "return" :
             df_raw, train = get_data_set_return("datasets/BTC_Daily_ohlc.csv", input_length, start_date, end_date)

@@ -87,24 +87,29 @@ def make_prediction(data , model = "gpt-4-vision-preview") :
         input_str = str_convert(train.values)
         print("Input str : ", input_str)
 
-        try :
-            list_response = request_gpt(input_str)
-            print("GPT Answer : ", list_response)
-        except Exception as e:
-            print("An error occurred:", e)
-            continue  
+        if model == "gpt-4-vision-preview" :
+            try :
+                list_response = request_gpt(input_str)
+                print("GPT Answer : ", list_response)
+            except Exception as e:
+                print("An error occurred:", e)
+                continue  
 
-        final_dic_int_list = data.seriealize(list_response)
-        print("serialized list : ", final_dic_int_list)
+            final_dic_int_list = data.seriealize(list_response)
+            print("serialized list : ", final_dic_int_list)
+        else :
+            final_dic_int_list = [[int(input_str[-7:-2]) for _ in range(7)]]
+            print("Last value get copied 7 times : ", final_dic_int_list)
 
         compute_error(final_dic_int_list, df_raw, input_length,  dic_error, dic_error_median)
         
         index_save = input_length
         current_folder = savefig + data.end_date + "_" + str(index_save)
-        data.draw_function(df_raw, train, final_dic_int_list, "gpt-4-vision-preview", savefig = current_folder)
+        data.draw_function(df_raw, train, final_dic_int_list, model, savefig = current_folder)
 
     dic_name = "pickle/dic_error_" + data.mode + "_" + data.name + "_" + data.end_date + ".pkl"
     dic_name_median =  "pickle/dic_error_" + data.mode + "_" + data.name + "_" + data.end_date  + "_median" + ".pkl"
+
     with open(dic_name, 'wb') as fichier:
         pickle.dump(dic_error, fichier)
 

@@ -4,7 +4,8 @@ import numpy as np
 
 
 def plot_preds_candles(df, train, pred, model_name, savefig = ""):
-
+    if model_name == "base" :
+        return
     save_folder = "./plot/" + savefig
     index = len(train)
 

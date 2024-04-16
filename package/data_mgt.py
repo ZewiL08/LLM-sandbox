@@ -10,6 +10,8 @@ from package.query import *
 from package.plot import *
 from package.seriealize import *
 from package.dic_mgt import *
+from package.model import *
+
 
 
 class Scaler:
@@ -67,6 +69,18 @@ def check_all_correct(data, start_date, day = True) :
     
     return True
 
+
+def get_model_from_name(model_name) :
+    if model_name == "gpt-4-vision-preview" :
+        return gpt4()
+    elif model_name == "arima" :
+        return arima()
+    elif model_name == "base" :
+        return base()
+    else :
+        print(f"Unknown model given in argument : {model_name}. Try with base, gpt-4-vision-preview or ARIMA")
+
+
 def make_prediction(data , model = "gpt-4-vision-preview") :
     
     end_date = data.end_date
@@ -76,42 +90,36 @@ def make_prediction(data , model = "gpt-4-vision-preview") :
     dic_error = get_specific_dic(list_input_length)
     dic_error_median = get_specific_dic(list_input_length)
 
+    dic_predict = get_specific_dic(list_input_length)
+
     for input_length in list_input_length :
         data.current_input_length = input_length
         data.get_data(input_length, start_date = None, end_date = end_date)
         print("data :", data)
         df_raw = data.df_raw
-        train = data.train
-        print("train :", train)
 
-        input_str = str_convert(train.values)
-        print("Input str : ", input_str)
+        current_model = get_model_from_name(model)
+        final_dic_int_list, error = current_model.predict(data)
 
-        if model == "gpt-4-vision-preview" :
-            try :
-                list_response = request_gpt(input_str)
-                print("GPT Answer : ", list_response)
-            except Exception as e:
-                print("An error occurred:", e)
-                continue  
-
-            final_dic_int_list = data.seriealize(list_response)
-            print("serialized list : ", final_dic_int_list)
-        else :
-            final_dic_int_list = [[int(input_str[-7:-2]) for _ in range(7)]]
-            print("Last value get copied 7 times : ", final_dic_int_list)
+        if error :
+            continue
 
         compute_error(final_dic_int_list, df_raw, input_length,  dic_error, dic_error_median)
+        dic_predict["input_length"][input_length]["Mae"] = final_dic_int_list
         
         index_save = input_length
         current_folder = savefig + data.end_date + "_" + str(index_save)
-        data.draw_function(df_raw, train, final_dic_int_list, model, savefig = current_folder)
+        data.draw_function(df_raw, data.train, final_dic_int_list, model, savefig = current_folder)
 
-    dic_name = "pickle/dic_error_" + data.mode + "_" + data.name + "_" + data.end_date + ".pkl"
-    dic_name_median =  "pickle/dic_error_" + data.mode + "_" + data.name + "_" + data.end_date  + "_median" + ".pkl"
+    dic_name = "pickle/" + model + "/" + "dic_error_" + data.mode + "_" + data.name + "_" + data.end_date + ".pkl"
+    dic_name_predict = "pickle/" + model + "/"  + data.mode + "_" + data.name + "_" + data.end_date + ".pkl"
+    dic_name_median =  "pickle/" + model + "/" + "dic_error_" + data.mode + "_" + data.name + "_" + data.end_date + "_median" + ".pkl"
 
     with open(dic_name, 'wb') as fichier:
         pickle.dump(dic_error, fichier)
+
+    with open(dic_name_predict, 'wb') as fichier:
+        pickle.dump(dic_predict, fichier)
 
     with open(dic_name_median, 'wb') as fichier:
         pickle.dump(dic_error_median, fichier)

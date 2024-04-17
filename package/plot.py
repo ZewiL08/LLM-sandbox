@@ -124,7 +124,7 @@ def plot_preds_candles_maxi(df, train, prediction, model_name , savefig = ""):
 
     # plt.plot(range(index, index + len(pred[0])), pred[0], label=model_name, color='purple')
     plt.legend(loc='upper left')
-    plt.title('ARIMA')
+    plt.title(model_name)
 
 
     index_to_display = range(0, len(truth), len(truth) // 6)
